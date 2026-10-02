@@ -1,0 +1,25 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+    <!-- White background rounded -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M16,4h32c6.6,0,12,5.4,12,12v32c0,6.6,-5.4,12,-12,12H16c-6.6,0,-12,-5.4,-12,-12V16C4,9.4,9.4,4,16,4z" />
+    <!-- Red arc -->
+    <path
+        android:fillColor="#EA4335"
+        android:pathData="M32,14c7,0,13.2,4,16.2,9.8L34.5,33.5h-5z" />
+    <!-- Yellow / Green arc -->
+    <path
+        android:fillColor="#FBBC05"
+        android:pathData="M48.2,23.8C50,27.2,50,31.2,48.2,35L39.5,50L32,37z" />
+    <path
+        android:fillColor="#34A853"
+        android:pathData="M32,50c-7.5,0,-14,-4.5,-16.8,-11l8.5,-14.7L32,32z" />
+    <!-- Blue circle center -->
+    <path
+        android:fillColor="#4285F4"
+        android:pathData="M32,24A8,8,0,1,1,31.9,24z" />
+</vector>

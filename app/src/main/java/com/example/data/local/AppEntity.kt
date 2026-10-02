@@ -1,0 +1,126 @@
+package com.example.data.local
+
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import com.example.model.AppItem
+
+@Entity(tableName = "apps")
+data class AppEntity(
+    @PrimaryKey val id: String,
+    val name: String,
+    val packageName: String,
+    val developer: String,
+    val category: String,
+    val categoryId: String,
+    val iconUrl: String,
+    val localIconRes: Int?,
+    val bannerUrl: String,
+    val localBannerRes: Int?,
+    val rating: Float,
+    val ratingCount: String,
+    val downloadsCount: String,
+    val fileSize: String,
+    val version: String,
+    val versionCode: Int,
+    val description: String,
+    val tagsJoined: String,
+    val apkDownloadUrl: String,
+    val isGame: Boolean,
+    val isFeatured: Boolean,
+    val isMostDownloaded: Boolean,
+    val isUpdateAvailable: Boolean,
+    val newVersion: String,
+    val releaseDate: String,
+    val updatedDate: String,
+    val isPublished: Boolean,
+    val isOpenSource: Boolean = false,
+    val rootCompatibility: String = "No root required",
+    val modInfo: String = "",
+    val minSdk: Int = 24,
+    val targetSdk: Int = 34,
+    val abi: String = "Universal",
+    val uploadedApkLocalPath: String = "",
+    val apkFileName: String = ""
+) {
+    fun toAppItem(): AppItem {
+        return AppItem(
+            id = id,
+            name = name,
+            packageName = packageName,
+            developer = developer,
+            category = category,
+            categoryId = categoryId,
+            iconUrl = iconUrl,
+            localIconRes = localIconRes,
+            bannerUrl = bannerUrl,
+            localBannerRes = localBannerRes,
+            rating = rating,
+            ratingCount = ratingCount,
+            downloadsCount = downloadsCount,
+            fileSize = fileSize,
+            version = version,
+            versionCode = versionCode,
+            description = description,
+            tags = if (tagsJoined.isBlank()) emptyList() else tagsJoined.split(","),
+            apkDownloadUrl = apkDownloadUrl,
+            isGame = isGame,
+            isFeatured = isFeatured,
+            isMostDownloaded = isMostDownloaded,
+            isUpdateAvailable = isUpdateAvailable,
+            newVersion = newVersion,
+            releaseDate = releaseDate,
+            updatedDate = updatedDate,
+            isPublished = isPublished,
+            isOpenSource = isOpenSource,
+            rootCompatibility = rootCompatibility,
+            modInfo = modInfo,
+            minSdk = minSdk,
+            targetSdk = targetSdk,
+            abi = abi,
+            uploadedApkLocalPath = uploadedApkLocalPath,
+            apkFileName = apkFileName
+        )
+    }
+
+    companion object {
+        fun fromAppItem(item: AppItem): AppEntity {
+            return AppEntity(
+                id = item.id,
+                name = item.name,
+                packageName = item.packageName,
+                developer = item.developer,
+                category = item.category,
+                categoryId = item.categoryId,
+                iconUrl = item.iconUrl,
+                localIconRes = item.localIconRes,
+                bannerUrl = item.bannerUrl,
+                localBannerRes = item.localBannerRes,
+                rating = item.rating,
+                ratingCount = item.ratingCount,
+                downloadsCount = item.downloadsCount,
+                fileSize = item.fileSize,
+                version = item.version,
+                versionCode = item.versionCode,
+                description = item.description,
+                tagsJoined = item.tags.joinToString(","),
+                apkDownloadUrl = item.apkDownloadUrl,
+                isGame = item.isGame,
+                isFeatured = item.isFeatured,
+                isMostDownloaded = item.isMostDownloaded,
+                isUpdateAvailable = item.isUpdateAvailable,
+                newVersion = item.newVersion,
+                releaseDate = item.releaseDate,
+                updatedDate = item.updatedDate,
+                isPublished = item.isPublished,
+                isOpenSource = item.isOpenSource,
+                rootCompatibility = item.rootCompatibility,
+                modInfo = item.modInfo,
+                minSdk = item.minSdk,
+                targetSdk = item.targetSdk,
+                abi = item.abi,
+                uploadedApkLocalPath = item.uploadedApkLocalPath,
+                apkFileName = item.apkFileName
+            )
+        }
+    }
+}
