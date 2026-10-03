@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "App Store Plus"
+rootProject.name = "AppStore Plus"
 
 include(":app")

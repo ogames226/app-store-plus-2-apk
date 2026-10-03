@@ -13,7 +13,7 @@ android {
   compileSdk { version = release(36) { minorApiLevel = 1 } }
 
   defaultConfig {
-    applicationId = "com.aistudio.appstoreplus.kxmpzq"
+    applicationId = "com.aistudio.appstoreplus.qkrzv"
     minSdk = 24
     targetSdk = 36
     versionCode = 1
@@ -41,11 +41,27 @@ android {
   buildTypes {
     release {
       isCrunchPngs = false
-      isMinifyEnabled = false
+      // R8 was off, so the shipped APK shipped unoptimised and unshrunk. This
+      // is the single largest startup/dex-load win available without code changes.
+      isMinifyEnabled = true
+      isShrinkResources = true
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
       signingConfig = signingConfigs.getByName("release")
     }
     debug { signingConfig = signingConfigs.getByName("debugConfig") }
+
+    // Perf-accurate but installable without the release upload key: same R8 /
+    // resource-shrinking / non-debuggable settings as `release`, signed with the
+    // throwaway debug key. Use this to measure real-world speed — a `debug` APK
+    // has all bytecode optimisation disabled and is not a valid perf sample.
+    create("perf") {
+      initWith(getByName("release"))
+      isDebuggable = false
+      isMinifyEnabled = true
+      isShrinkResources = true
+      matchingFallbacks += listOf("release")
+      signingConfig = signingConfigs.getByName("debugConfig")
+    }
   }
   compileOptions {
     sourceCompatibility = JavaVersion.VERSION_11
@@ -90,11 +106,11 @@ dependencies {
   implementation(libs.androidx.compose.ui.graphics)
   implementation(libs.androidx.compose.ui.tooling.preview)
   implementation(libs.androidx.core.ktx)
-  implementation(libs.androidx.datastore.preferences)
+  // implementation(libs.androidx.datastore.preferences)
   implementation(libs.androidx.lifecycle.runtime.compose)
   implementation(libs.androidx.lifecycle.runtime.ktx)
   implementation(libs.androidx.lifecycle.viewmodel.compose)
-  implementation(libs.androidx.navigation.compose)
+  // implementation(libs.androidx.navigation.compose)
   implementation(libs.androidx.room.ktx)
   implementation(libs.androidx.room.runtime)
   implementation(libs.coil.compose)
@@ -102,7 +118,6 @@ dependencies {
   implementation(libs.firebase.ai)
   implementation(libs.firebase.firestore)
   implementation(libs.firebase.auth)
-  implementation(libs.firebase.storage)
   implementation(libs.androidx.credentials)
   implementation(libs.androidx.credentials.play.services)
   implementation(libs.googleid)

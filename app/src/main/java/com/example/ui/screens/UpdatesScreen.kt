@@ -10,73 +10,91 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.model.AppItem
-import com.example.model.DownloadItem
-import com.example.ui.components.AppListRow
-import com.example.ui.theme.DarkBg
-import com.example.ui.theme.TextMuted
+import com.example.model.DownloadProgress
+import com.example.model.StoreItem
+import com.example.ui.components.AppListItem
+import com.example.ui.theme.BackgroundDark
 import com.example.ui.theme.TextPrimary
+import com.example.ui.theme.TextSecondary
 
 @Composable
 fun UpdatesScreen(
-    updates: List<AppItem>,
-    downloads: Map<String, DownloadItem>,
-    onAppClick: (AppItem) -> Unit,
-    onUpdateApp: (AppItem) -> Unit,
-    onCancelDownload: (String) -> Unit,
-    onOpenApp: (AppItem) -> Unit
+  updateItems: List<StoreItem>,
+  downloadStates: Map<String, DownloadProgress>,
+  onItemClick: (StoreItem) -> Unit,
+  onUpdateClick: (StoreItem) -> Unit,
+  onOpenClick: (StoreItem) -> Unit = {},
+  scrollToTopToken: Int = 0
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(DarkBg)
-    ) {
-        // Header
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 18.dp)
-        ) {
-            Text(
-                text = "التحديثات",
-                color = TextPrimary,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "التطبيقات والألعاب التي تحتاج إلى تحديث",
-                color = TextMuted,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Normal
-            )
-        }
+  val listState = rememberLazyListState()
+  listState.ScrollToTopOnToken(scrollToTopToken)
 
-        // List of items to update
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 85.dp)
-        ) {
-            items(updates) { app ->
-                AppListRow(
-                    app = app,
-                    downloadItem = downloads[app.id],
-                    subtitle = app.developer,
-                    buttonText = "تحديث",
-                    onClick = { onAppClick(app) },
-                    onInstallClick = { onUpdateApp(app) },
-                    onCancelClick = { onCancelDownload(app.id) },
-                    onOpenClick = { onOpenApp(app) }
-                )
-            }
-        }
+  Column(
+    modifier = Modifier
+      .fillMaxSize()
+      .background(BackgroundDark)
+  ) {
+    // Header Section
+    Column(
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 20.dp, vertical = 16.dp)
+    ) {
+      Text(
+        text = "التحديثات",
+        fontSize = 24.sp,
+        fontWeight = FontWeight.Bold,
+        color = TextPrimary
+      )
+
+      Spacer(modifier = Modifier.height(4.dp))
+
+      Text(
+        text = "التطبيقات والألعاب التي تحتاج إلى تحديث",
+        fontSize = 13.sp,
+        color = TextSecondary
+      )
     }
+
+    // List of Updates
+    LazyColumn(
+      state = listState,
+      modifier = Modifier.fillMaxSize(),
+      contentPadding = PaddingValues(bottom = 16.dp)
+    ) {
+      items(updateItems, key = { it.id }) { item ->
+        AppListItem(
+          item = item,
+          downloadProgress = downloadStates[item.id],
+          onClick = { onItemClick(item) },
+          onInstallClick = { onUpdateClick(item) },
+          onOpenClick = { onOpenClick(item) }
+        )
+      }
+
+      if (updateItems.isEmpty()) {
+        item {
+          Box(
+            modifier = Modifier
+              .fillMaxWidth()
+              .padding(40.dp)
+          ) {
+            Text(
+              text = "جميع تطبيقاتك محدثة إلى آخر إصدار!",
+              color = TextSecondary,
+              fontSize = 15.sp
+            )
+          }
+        }
+      }
+    }
+  }
 }
