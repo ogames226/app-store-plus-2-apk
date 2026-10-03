@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Local-development admin allow-list.
+
+  REPLACE THIS for your own deployment - see docs/CONFIGURATION.md.
+
+  These addresses grant full write access to the `apps` and `categories`
+  collections through the `isAdmin()` helper in firestore.rules. Leaving a real
+  address in a public repository publishes your identity and, worse, lets anyone
+  who forks the project inherit those privileges.
+
+  Prefer a server-controlled mechanism:
+    1. Set `isAdmin: true` in the user's Firestore document, or
+    2. Use a Firebase custom claim (cannot be spoofed client-side at all).
+
+  Keep this array EMPTY in any shared/public build. An empty array simply means
+  no one can write through the admin dashboard, which is the safe default.
+-->
+<resources>
+    <string-array name="admin_emails" translatable="false">
+        <!-- Example: <item>you@example.com</item> -->
+    </string-array>
+</resources>

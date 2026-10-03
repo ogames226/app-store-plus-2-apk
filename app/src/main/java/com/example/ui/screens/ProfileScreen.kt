@@ -1,9 +1,7 @@
 package com.example.ui.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,246 +18,284 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
+import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.AdminPanelSettings
-import androidx.compose.material.icons.filled.BookmarkBorder
-import androidx.compose.material.icons.filled.HelpOutline
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.PersonOutline
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
-import com.example.model.UserProfile
-import com.example.ui.theme.BorderSubtle
-import com.example.ui.theme.BrandBlue
-import com.example.ui.theme.BrandRed
-import com.example.ui.theme.DarkBg
-import com.example.ui.theme.SurfaceCard
+import com.example.model.UserAccount
+import com.example.ui.ScreenDestination
+import com.example.ui.components.StoreImage
+import com.example.ui.components.pressable
+import com.example.ui.theme.BackgroundDark
+import com.example.ui.theme.ButtonInstallBlue
+import com.example.ui.theme.CardBorder
+import com.example.ui.theme.CardDark
+import com.example.ui.theme.DarkLogoutBg
+import com.example.ui.theme.DarkLogoutBorder
+import com.example.ui.theme.DarkLogoutText
+import com.example.ui.theme.PrimaryBlue
 import com.example.ui.theme.TextMuted
 import com.example.ui.theme.TextPrimary
+import com.example.ui.theme.TextSecondary
 
 @Composable
 fun ProfileScreen(
-    userProfile: UserProfile,
-    onNavigateToAdmin: () -> Unit,
-    onNavigateToSettings: () -> Unit,
-    onSignOutClick: () -> Unit,
-    onSignInClick: () -> Unit
+  user: UserAccount?,
+  onSignInClick: () -> Unit,
+  onSignOutClick: () -> Unit,
+  onNavigate: (ScreenDestination) -> Unit,
+  scrollToTopToken: Int = 0
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(DarkBg)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 18.dp)
-            .padding(bottom = 70.dp)
-    ) {
-        // Title: حسابي
-        Text(
-            text = "حسابي",
-            color = TextPrimary,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 20.dp)
-        )
-
-        // User Profile Card
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(20.dp))
-                .background(SurfaceCard)
-                .border(width = 0.5.dp, color = BorderSubtle, shape = RoundedCornerShape(20.dp))
-                .padding(18.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.img_profile_avatar),
-                    contentDescription = "User Avatar",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(68.dp)
-                        .clip(CircleShape)
-                        .border(2.dp, BrandBlue, CircleShape)
-                )
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                Column {
-                    Text(
-                        text = userProfile.displayName,
-                        color = TextPrimary,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = userProfile.email,
-                        color = TextMuted,
-                        fontSize = 13.sp
-                    )
-                    if (userProfile.isAdmin) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0xFF1E3A8A))
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = "مدير المتجر (Admin)",
-                                color = BrandBlue,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Options Menu Card
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(20.dp))
-                .background(SurfaceCard)
-                .border(width = 0.5.dp, color = BorderSubtle, shape = RoundedCornerShape(20.dp))
-        ) {
-            Column {
-                MenuItem(
-                    icon = Icons.Filled.PersonOutline,
-                    title = "الملف الشخصي",
-                    onClick = onSignInClick
-                )
-                HorizontalDivider(color = BorderSubtle, thickness = 0.5.dp)
-
-                MenuItem(
-                    icon = Icons.Filled.BookmarkBorder,
-                    title = "المفضلة",
-                    onClick = {}
-                )
-                HorizontalDivider(color = BorderSubtle, thickness = 0.5.dp)
-
-                // Admin Dashboard Option
-                MenuItem(
-                    icon = Icons.Filled.AdminPanelSettings,
-                    title = "لوحة تحكم المدير (Admin Dashboard)",
-                    iconTint = BrandBlue,
-                    onClick = onNavigateToAdmin
-                )
-                HorizontalDivider(color = BorderSubtle, thickness = 0.5.dp)
-
-                MenuItem(
-                    icon = Icons.Filled.Settings,
-                    title = "الإعدادات",
-                    onClick = onNavigateToSettings
-                )
-                HorizontalDivider(color = BorderSubtle, thickness = 0.5.dp)
-
-                MenuItem(
-                    icon = Icons.Filled.HelpOutline,
-                    title = "المساعدة والدعم",
-                    onClick = {}
-                )
-                HorizontalDivider(color = BorderSubtle, thickness = 0.5.dp)
-
-                MenuItem(
-                    icon = Icons.Filled.Info,
-                    title = "حول التطبيق",
-                    subtitle = "App Store Plus v1.0.0",
-                    onClick = {}
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(28.dp))
-
-        // Logout Button matching Image 8
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp)
-                .clip(RoundedCornerShape(26.dp))
-                .background(Color(0x1AEF4444))
-                .border(1.dp, Color(0x33EF4444), RoundedCornerShape(26.dp))
-                .clickable(onClick = onSignOutClick),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "تسجيل الخروج",
-                color = BrandRed,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
+  val scrollState = rememberScrollState()
+  // Same bottom-nav re-tap contract as the lazy screens.
+  val handledToken = remember { mutableIntStateOf(-1) }
+  LaunchedEffect(scrollToTopToken) {
+    if (scrollToTopToken > 0 && scrollToTopToken != handledToken.intValue) {
+      handledToken.intValue = scrollToTopToken
+      scrollState.animateScrollTo(0)
     }
+  }
+
+  Column(
+    modifier = Modifier
+      .fillMaxSize()
+      .background(BackgroundDark)
+      .verticalScroll(scrollState)
+      .padding(horizontal = 20.dp, vertical = 16.dp)
+      .padding(bottom = 24.dp)
+  ) {
+    // Header Title
+    Box(
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(vertical = 12.dp)
+    ) {
+      Text(
+        text = "حسابي",
+        fontSize = 24.sp,
+        fontWeight = FontWeight.Bold,
+        color = TextPrimary
+      )
+    }
+
+    // Profile Card matching reference design
+    Box(
+      modifier = Modifier
+        .fillMaxWidth()
+        .clip(RoundedCornerShape(22.dp))
+        .background(CardDark)
+        .border(1.dp, CardBorder, RoundedCornerShape(22.dp))
+        .padding(18.dp)
+    ) {
+      Row(
+        verticalAlignment = Alignment.CenterVertically
+      ) {
+        // Circular Anime Avatar
+        Box(
+          modifier = Modifier
+            .size(70.dp)
+            .clip(CircleShape)
+            .border(2.dp, PrimaryBlue, CircleShape)
+        ) {
+          StoreImage(
+            data = user?.photoUrl?.ifEmpty { null } ?: R.drawable.user_avatar,
+            contentDescription = "الصورة الشخصية",
+            width = 70.dp,
+            height = 70.dp
+          )
+        }
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        Column {
+          Text(
+            text = user?.name ?: "زائر",
+            fontSize = 17.sp,
+            fontWeight = FontWeight.Bold,
+            color = TextPrimary
+          )
+          Spacer(modifier = Modifier.height(4.dp))
+          Text(
+            text = user?.email?.ifEmpty { "guest@example.com" } ?: "guest@example.com",
+            fontSize = 13.sp,
+            color = TextSecondary
+          )
+          if (user?.isAdmin == true) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+              text = "مشرف النظام (Admin)",
+              fontSize = 11.sp,
+              fontWeight = FontWeight.Bold,
+              color = Color(0xFF38BDF8)
+            )
+          }
+        }
+      }
+    }
+
+    Spacer(modifier = Modifier.height(22.dp))
+
+    // Grouped Menu List
+    Column(
+      modifier = Modifier
+        .fillMaxWidth()
+        .clip(RoundedCornerShape(22.dp))
+        .background(CardDark)
+        .border(1.dp, CardBorder, RoundedCornerShape(22.dp))
+    ) {
+      MenuItemRow(
+        title = "الملف الشخصي",
+        icon = Icons.Default.Person,
+        onClick = {}
+      )
+      MenuDivider()
+
+      MenuItemRow(
+        title = "المفضلة",
+        icon = Icons.Default.Bookmark,
+        onClick = { onNavigate(ScreenDestination.Apps) }
+      )
+      MenuDivider()
+
+      MenuItemRow(
+        title = "الإعدادات",
+        icon = Icons.Default.Settings,
+        onClick = {}
+      )
+      MenuDivider()
+
+      MenuItemRow(
+        title = "المساعدة والدعم",
+        icon = Icons.AutoMirrored.Filled.Help,
+        onClick = {}
+      )
+      MenuDivider()
+
+      MenuItemRow(
+        title = "حول التطبيق",
+        icon = Icons.Default.Info,
+        onClick = {}
+      )
+
+      // Admin Dashboard Option
+      MenuDivider()
+      MenuItemRow(
+        title = "لوحة تحكم المشرف (Admin Dashboard)",
+        icon = Icons.Default.AdminPanelSettings,
+        iconTint = Color(0xFF38BDF8),
+        onClick = { onNavigate(ScreenDestination.Admin) }
+      )
+    }
+
+    Spacer(modifier = Modifier.height(28.dp))
+
+    // Sign In / Logout Button
+    if (user != null) {
+      Button(
+        onClick = onSignOutClick,
+        modifier = Modifier
+          .fillMaxWidth()
+          .height(52.dp)
+          .testTag("logout_button"),
+        colors = ButtonDefaults.buttonColors(containerColor = DarkLogoutBg),
+        shape = RoundedCornerShape(26.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, DarkLogoutBorder)
+      ) {
+        Text(
+          text = "تسجيل الخروج",
+          fontSize = 15.sp,
+          fontWeight = FontWeight.Bold,
+          color = DarkLogoutText
+        )
+      }
+    } else {
+      Button(
+        onClick = onSignInClick,
+        modifier = Modifier
+          .fillMaxWidth()
+          .height(52.dp)
+          .testTag("google_signin_button"),
+        colors = ButtonDefaults.buttonColors(containerColor = ButtonInstallBlue),
+        shape = RoundedCornerShape(26.dp)
+      ) {
+        Text(
+          text = "تسجيل الدخول عبر Google",
+          fontSize = 15.sp,
+          fontWeight = FontWeight.Bold,
+          color = Color.White
+        )
+      }
+    }
+  }
 }
 
 @Composable
-private fun MenuItem(
-    icon: ImageVector,
-    title: String,
-    subtitle: String? = null,
-    iconTint: Color = TextPrimary,
-    onClick: () -> Unit
+private fun MenuItemRow(
+  title: String,
+  icon: ImageVector,
+  iconTint: Color = TextPrimary,
+  onClick: () -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 18.dp, vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = icon,
-                contentDescription = title,
-                tint = iconTint,
-                modifier = Modifier.size(22.dp)
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Column {
-                Text(
-                    text = title,
-                    color = TextPrimary,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium
-                )
-                if (subtitle != null) {
-                    Text(
-                        text = subtitle,
-                        color = TextMuted,
-                        fontSize = 12.sp
-                    )
-                }
-            }
-        }
-
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
-            contentDescription = null,
-            tint = TextMuted,
-            modifier = Modifier.size(14.dp)
-        )
+  Row(
+    modifier = Modifier
+      .fillMaxWidth()
+      .pressable(scaleOnPress = 0.98f, onClick = onClick)
+      .padding(horizontal = 18.dp, vertical = 15.dp),
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.SpaceBetween
+  ) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+      Icon(
+        imageVector = icon,
+        contentDescription = title,
+        tint = iconTint,
+        modifier = Modifier.size(22.dp)
+      )
+      Spacer(modifier = Modifier.width(14.dp))
+      Text(
+        text = title,
+        fontSize = 15.sp,
+        fontWeight = FontWeight.Medium,
+        color = TextPrimary
+      )
     }
+
+    Icon(
+      imageVector = Icons.Default.ChevronLeft,
+      contentDescription = null,
+      tint = TextMuted,
+      modifier = Modifier.size(18.dp)
+    )
+  }
+}
+
+@Composable
+private fun MenuDivider() {
+  Divider(
+    color = CardBorder.copy(alpha = 0.6f),
+    thickness = 0.8.dp,
+    modifier = Modifier.padding(horizontal = 14.dp)
+  )
 }

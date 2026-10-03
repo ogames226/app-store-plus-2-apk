@@ -1,35 +1,35 @@
 package com.example.ui.theme
 
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
-val DarkBg = Color(0xFF0B0F19)
-val SurfaceDark = Color(0xFF13192B)
-val SurfaceVariantDark = Color(0xFF1A2238)
-val SurfaceCard = Color(0xFF151C30)
-val BorderSubtle = Color(0xFF1F2942)
+// Primary AppStore Plus Dark Palette
+val BackgroundDark = Color(0xFF070A12)
+val SurfaceDark = Color(0xFF0F172A)
+val CardDark = Color(0xFF131D33)
+val CardElevated = Color(0xFF1A2642)
+val CardBorder = Color(0xFF1E2D4A)
 
-val BrandBlue = Color(0xFF3B82F6)
-val BrandBlueDark = Color(0xFF2563EB)
-val BrandPurple = Color(0xFF8B5CF6)
-val BrandIndigo = Color(0xFF6366F1)
-val BrandPink = Color(0xFFEC4899)
-val BrandGreen = Color(0xFF10B981)
-val BrandOrange = Color(0xFFF97316)
-val BrandRed = Color(0xFFEF4444)
+// Vibrant Accent Colors
+val PrimaryBlue = Color(0xFF2563EB)
+val PrimaryBlueGlow = Color(0xFF3B82F6)
+val PrimaryGradientStart = Color(0xFF3B82F6)
+val PrimaryGradientEnd = Color(0xFF8B5CF6)
 
+val AccentPurple = Color(0xFF8B5CF6)
+val AccentPink = Color(0xFFEC4899)
+val AccentCyan = Color(0xFF06B6D4)
+val AccentGreen = Color(0xFF10B981)
+val AccentAmber = Color(0xFFF59E0B)
+val AccentRed = Color(0xFFEF4444)
+
+// Text Colors
 val TextPrimary = Color(0xFFFFFFFF)
 val TextSecondary = Color(0xFF94A3B8)
 val TextMuted = Color(0xFF64748B)
 
-val PrimaryGradient = Brush.horizontalGradient(
-    colors = listOf(Color(0xFF3B82F6), Color(0xFF6366F1))
-)
-
-val ButtonGradient = Brush.horizontalGradient(
-    colors = listOf(Color(0xFF2563EB), Color(0xFF4F46E5))
-)
-
-val CardGlow = Brush.verticalGradient(
-    colors = listOf(Color(0xFF1E2942), Color(0xFF13192B))
-)
+// Badges & Buttons
+val ButtonInstallBlue = Color(0xFF2563EB)
+val ButtonInstallPressed = Color(0xFF1D4ED8)
+val DarkLogoutBg = Color(0xFF2D151B)
+val DarkLogoutBorder = Color(0xFF5A1D28)
+val DarkLogoutText = Color(0xFFF87171)

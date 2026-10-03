@@ -1,9 +1,7 @@
 package com.example.ui.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,433 +15,441 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.GridView
-import androidx.compose.material.icons.filled.NotificationsNone
+import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.SportsEsports
-import androidx.compose.material.icons.filled.Update
-import androidx.compose.material.icons.filled.UploadFile
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
-import com.example.model.AppItem
-import com.example.model.DownloadItem
+import com.example.model.DownloadProgress
+import com.example.model.StoreItem
+import com.example.ui.ScreenDestination
 import com.example.ui.components.AppGridCard
-import com.example.ui.components.AppSearchBar
-import com.example.ui.components.DownloadButton
-import com.example.ui.components.QuickActionPill
-import com.example.ui.theme.BorderSubtle
-import com.example.ui.theme.BrandBlue
-import com.example.ui.theme.DarkBg
-import com.example.ui.theme.SurfaceCard
-import com.example.ui.theme.TextMuted
+import com.example.ui.components.SearchInputField
+import com.example.ui.components.StoreImage
+import com.example.ui.components.StoreTopBar
+import com.example.ui.components.bannerScrim
+import com.example.ui.components.minTouchTarget
+import com.example.ui.components.pressable
+import com.example.ui.theme.AccentGreen
+import com.example.ui.theme.AccentPink
+import com.example.ui.theme.BackgroundDark
+import com.example.ui.theme.ButtonInstallBlue
+import com.example.ui.theme.CardBorder
+import com.example.ui.theme.PrimaryBlue
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
 
+/**
+ * Home is the app's landing screen and was a `Column` + `verticalScroll`: every
+ * card, both carousels, and all their images were composed up front on first
+ * frame, then recomposed in full on every download tick. It's now one
+ * `LazyColumn`, so only visible items compose and off-screen ones are disposed.
+ */
 @Composable
 fun HomeScreen(
-    featuredGame: AppItem?,
-    mostDownloadedApps: List<AppItem>,
-    featuredGames: List<AppItem>,
-    downloads: Map<String, DownloadItem>,
-    onAppClick: (AppItem) -> Unit,
-    onInstallApp: (AppItem) -> Unit,
-    onCancelDownload: (String) -> Unit,
-    onOpenApp: (AppItem) -> Unit,
-    onSearchClick: () -> Unit,
-    onNavigateToUpdates: () -> Unit,
-    onNavigateToApps: () -> Unit,
-    onNavigateToGames: () -> Unit,
-    onNavigateToCategories: () -> Unit,
-    onNavigateToAdmin: () -> Unit,
-    onProfileClick: () -> Unit
+  storeItems: List<StoreItem>,
+  searchQuery: String,
+  onSearchChange: (String) -> Unit,
+  downloadStates: Map<String, DownloadProgress>,
+  onItemClick: (StoreItem) -> Unit,
+  onInstallClick: (StoreItem) -> Unit,
+  onOpenClick: (StoreItem) -> Unit = {},
+  onNavigate: (ScreenDestination) -> Unit,
+  /** Increments on bottom-nav re-tap of Home; drives scroll-to-top. */
+  scrollToTopToken: Int = 0,
+  /** Home owns its own query so typing here doesn't tear down the screen. */
+  onSearchSubmit: (String) -> Unit = {}
 ) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(DarkBg),
-        contentPadding = PaddingValues(bottom = 80.dp)
-    ) {
-        // Top Bar: Notification Bell & Profile Avatar
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Notifications icon with badge
-                Box(
-                    modifier = Modifier
-                        .size(42.dp)
-                        .clip(CircleShape)
-                        .background(SurfaceCard)
-                        .clickable { onNavigateToUpdates() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.NotificationsNone,
-                        contentDescription = "Notifications",
-                        tint = TextPrimary,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
+  val listState = rememberLazyListState()
+  listState.ScrollToTopOnToken(scrollToTopToken)
 
-                // Profile Avatar button
-                Image(
-                    painter = painterResource(id = R.drawable.img_profile_avatar),
-                    contentDescription = "Profile",
-                    modifier = Modifier
-                        .size(42.dp)
-                        .clip(CircleShape)
-                        .border(1.5.dp, BrandBlue, CircleShape)
-                        .clickable(onClick = onProfileClick),
-                    contentScale = ContentScale.Crop
-                )
-            }
-        }
+  // These two lists were recomputed on every recomposition; they only change
+  // when the catalog does.
+  val heroItem = remember(storeItems) {
+    storeItems.find { it.id == "gta-v" } ?: storeItems.firstOrNull { it.type == "game" }
+  }
+  val mostDownloaded = remember(storeItems) {
+    storeItems.filter { it.type == "app" }.sortedByDescending { it.downloadCount }
+  }
+  val featuredGames = remember(storeItems) {
+    storeItems.filter { it.type == "game" }
+  }
 
-        // Search Bar (Read-only click to search screen)
-        item {
-            Box(modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)) {
-                AppSearchBar(
-                    query = "",
-                    onQueryChange = {},
-                    placeholder = "ابحث عن تطبيقات أو ألعاب...",
-                    isReadOnly = true,
-                    onClickWhenReadOnly = onSearchClick
-                )
-            }
-        }
+  LazyColumn(
+    state = listState,
+    modifier = Modifier
+      .fillMaxSize()
+      .background(BackgroundDark)
+  ) {
+    item(key = "top_bar") { StoreTopBar(
+      onNotificationClick = { onNavigate(ScreenDestination.Updates) },
+      onProfileClick = { onNavigate(ScreenDestination.Profile) },
+      onMenuClick = { onNavigate(ScreenDestination.Profile) }
+    ) }
 
-        // Featured Hero Banner
-        item {
-            if (featuredGame != null) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 10.dp)
-                        .height(180.dp)
-                        .clip(RoundedCornerShape(22.dp))
-                        .clickable { onAppClick(featuredGame) }
-                ) {
-                    if (featuredGame.localBannerRes != null) {
-                        Image(
-                            painter = painterResource(id = featuredGame.localBannerRes),
-                            contentDescription = featuredGame.name,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    } else {
-                        Image(
-                            painter = painterResource(id = R.drawable.img_gtav_banner),
-                            contentDescription = featuredGame.name,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-
-                    // Gradient shade for text readability
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                Brush.verticalGradient(
-                                    colors = listOf(Color.Transparent, Color(0xCC000000), Color(0xF50B0F19))
-                                )
-                            )
-                    )
-
-                    // Content overlay
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(16.dp)
-                    ) {
-                        Text(
-                            text = featuredGame.name,
-                            color = Color.White,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "الآن على هاتفك",
-                            color = Color(0xFFCBD5E1),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Normal
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        DownloadButton(
-                            downloadItem = downloads[featuredGame.id],
-                            defaultText = "تثبيت",
-                            onInstallClick = { onInstallApp(featuredGame) },
-                            onCancelClick = { onCancelDownload(featuredGame.id) },
-                            onOpenClick = { onOpenApp(featuredGame) },
-                            height = 32.dp,
-                            fontSize = 12
-                        )
-                    }
-                }
-            } else {
-                // Clean empty-store hero banner
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 10.dp)
-                        .height(170.dp)
-                        .clip(RoundedCornerShape(22.dp))
-                        .background(
-                            Brush.linearGradient(
-                                colors = listOf(Color(0xFF1E293B), Color(0xFF0F172A))
-                            )
-                        )
-                        .border(width = 0.5.dp, color = BorderSubtle, shape = RoundedCornerShape(22.dp))
-                        .padding(18.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column {
-                            Text(
-                                text = "App Store Plus",
-                                color = TextPrimary,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "المتجر خالٍ من البيانات الوهمية وجاهز لرفع تطبيقاتك الحقيقية",
-                                color = TextMuted,
-                                fontSize = 13.sp
-                            )
-                        }
-
-                        Button(
-                            onClick = onNavigateToAdmin,
-                            colors = ButtonDefaults.buttonColors(containerColor = BrandBlue),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.height(38.dp)
-                        ) {
-                            Icon(Icons.Filled.UploadFile, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("رفع ونشر أول تطبيق من لوحة التحكم", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
-        }
-
-        // 4 Quick Category Pills Row: تحديثات, تطبيقات, ألعاب, تصنيفات
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                QuickActionPill(
-                    title = "تصنيفات",
-                    icon = Icons.Filled.Folder,
-                    iconColor = Color(0xFF10B981),
-                    bgColor = Color(0xFF064E3B),
-                    onClick = onNavigateToCategories
-                )
-                QuickActionPill(
-                    title = "ألعاب",
-                    icon = Icons.Filled.SportsEsports,
-                    iconColor = Color(0xFF3B82F6),
-                    bgColor = Color(0xFF1E3A8A),
-                    onClick = onNavigateToGames
-                )
-                QuickActionPill(
-                    title = "تطبيقات",
-                    icon = Icons.Filled.GridView,
-                    iconColor = Color(0xFF8B5CF6),
-                    bgColor = Color(0xFF4C1D95),
-                    onClick = onNavigateToApps
-                )
-                QuickActionPill(
-                    title = "تحديثات",
-                    icon = Icons.Filled.Update,
-                    iconColor = Color(0xFFEC4899),
-                    bgColor = Color(0xFF831843),
-                    onClick = onNavigateToUpdates
-                )
-            }
-        }
-
-        // Section: الأكثر تحميلاً (Most Downloaded)
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "الأكثر تحميلاً",
-                    color = TextPrimary,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "المزيد",
-                    color = BrandBlue,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.clickable { onNavigateToApps() }
-                )
-            }
-        }
-
-        item {
-            if (mostDownloadedApps.isNotEmpty()) {
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 20.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(mostDownloadedApps) { app ->
-                        AppGridCard(
-                            app = app,
-                            downloadItem = downloads[app.id],
-                            onClick = { onAppClick(app) },
-                            onInstallClick = { onInstallApp(app) },
-                            onCancelClick = { onCancelDownload(app.id) },
-                            onOpenClick = { onOpenApp(app) }
-                        )
-                    }
-                }
-            } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(SurfaceCard)
-                        .border(width = 0.5.dp, color = BorderSubtle, shape = RoundedCornerShape(16.dp))
-                        .padding(18.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "لا توجد تطبيقات منشورة حالياً في هذا القسم. ارفع تطبيقاً وضع علامة \"الأكثر تحميلاً\".",
-                        color = TextMuted,
-                        fontSize = 12.sp
-                    )
-                }
-            }
-        }
-
-        // Section: ألعاب مميزة (Featured Games)
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "ألعاب مميزة",
-                    color = TextPrimary,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "المزيد",
-                    color = BrandBlue,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.clickable { onNavigateToGames() }
-                )
-            }
-        }
-
-        // Horizontal Carousel of Featured Games
-        item {
-            if (featuredGames.isNotEmpty()) {
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 20.dp),
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    items(featuredGames) { game ->
-                        Box(
-                            modifier = Modifier
-                                .width(140.dp)
-                                .height(90.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .border(width = 0.5.dp, color = BorderSubtle, shape = RoundedCornerShape(16.dp))
-                                .clickable { onAppClick(game) }
-                        ) {
-                            if (game.localBannerRes != null) {
-                                Image(
-                                    painter = painterResource(id = game.localBannerRes),
-                                    contentDescription = game.name,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                            }
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(
-                                        Brush.verticalGradient(
-                                            listOf(Color.Transparent, Color(0xB3000000))
-                                        )
-                                    )
-                            )
-                            Text(
-                                text = game.name,
-                                color = Color.White,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier
-                                    .align(Alignment.BottomStart)
-                                    .padding(8.dp),
-                                maxLines = 1
-                            )
-                        }
-                    }
-                }
-            } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(SurfaceCard)
-                        .border(width = 0.5.dp, color = BorderSubtle, shape = RoundedCornerShape(16.dp))
-                        .padding(18.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "لا توجد ألعاب مميزة منشورة حالياً. ارفع لعبة وضع علامة \"مميز في الصفحة الرئيسية\".",
-                        color = TextMuted,
-                        fontSize = 12.sp
-                    )
-                }
-            }
-        }
+    item(key = "search") {
+      Spacer(modifier = Modifier.height(6.dp))
+      SearchInputField(
+        query = searchQuery,
+        onQueryChange = onSearchChange,
+        onSearchSubmit = onSearchSubmit
+      )
     }
+
+    // Hero Featured Banner
+    item(key = "hero") {
+      if (heroItem != null) {
+        Spacer(modifier = Modifier.height(18.dp))
+        HeroBanner(
+          item = heroItem,
+          onClick = { onItemClick(heroItem) },
+          onInstallClick = { onInstallClick(heroItem) }
+        )
+      }
+    }
+
+    // 4 Action Buttons Row
+    item(key = "quick_actions") {
+      Spacer(modifier = Modifier.height(20.dp))
+      Row(
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+      ) {
+        QuickActionButton(
+          title = "تحديثات",
+          icon = Icons.Default.SystemUpdate,
+          bgColor = Color(0xFF2E192E),
+          iconColor = AccentPink,
+          onClick = { onNavigate(ScreenDestination.Updates) }
+        )
+
+        QuickActionButton(
+          title = "تطبيقات",
+          icon = Icons.Default.Apps,
+          bgColor = Color(0xFF142442),
+          iconColor = Color(0xFF3B82F6),
+          onClick = { onNavigate(ScreenDestination.Apps) }
+        )
+
+        QuickActionButton(
+          title = "ألعاب",
+          icon = Icons.Default.SportsEsports,
+          bgColor = Color(0xFF192548),
+          iconColor = Color(0xFF6366F1),
+          onClick = { onNavigate(ScreenDestination.Games) }
+        )
+
+        QuickActionButton(
+          title = "تصنيفات",
+          icon = Icons.Default.Download,
+          bgColor = Color(0xFF0F3028),
+          iconColor = AccentGreen,
+          onClick = { onNavigate(ScreenDestination.Categories) }
+        )
+      }
+    }
+
+    // Section "الأكثر تحميلاً"
+    item(key = "most_downloaded_header") {
+      Spacer(modifier = Modifier.height(26.dp))
+      SectionHeader(
+        title = "الأكثر تحميلاً",
+        onMoreClick = { onNavigate(ScreenDestination.Apps) }
+      )
+      Spacer(modifier = Modifier.height(12.dp))
+    }
+
+    item(key = "most_downloaded_row") {
+      LazyRow(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
+      ) {
+        items(mostDownloaded, key = { it.id }) { item ->
+          AppGridCard(
+            item = item,
+            downloadProgress = downloadStates[item.id],
+            onClick = { onItemClick(item) },
+            onInstallClick = { onInstallClick(item) },
+            onOpenClick = { onOpenClick(item) }
+          )
+        }
+      }
+    }
+
+    // Section "ألعاب مميزة"
+    item(key = "featured_games_header") {
+      Spacer(modifier = Modifier.height(28.dp))
+      SectionHeader(
+        title = "ألعاب مميزة",
+        onMoreClick = { onNavigate(ScreenDestination.Games) }
+      )
+      Spacer(modifier = Modifier.height(12.dp))
+    }
+
+    item(key = "featured_games_row") {
+      LazyRow(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
+      ) {
+        items(featuredGames, key = { it.id }) { game ->
+          FeaturedGameCard(
+            game = game,
+            onClick = { onItemClick(game) }
+          )
+        }
+      }
+    }
+
+    // Trailing space so the last carousel clears the bottom bar without a
+    // hardcoded 90dp guess on every screen.
+    item(key = "tail") { Spacer(modifier = Modifier.height(24.dp)) }
+  }
+}
+
+@Composable
+private fun HeroBanner(
+  item: StoreItem,
+  onClick: () -> Unit,
+  onInstallClick: () -> Unit
+) {
+  Box(
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(horizontal = 16.dp)
+      .height(190.dp)
+      .clip(RoundedCornerShape(22.dp))
+      .border(1.dp, CardBorder, RoundedCornerShape(22.dp))
+      .pressable(onClick = onClick)
+      .testTag("hero_banner_card")
+  ) {
+    StoreImage(
+      data = R.drawable.hero_gta,
+      contentDescription = "GTA V Featured",
+      // Half the display width: this is a dark scrimmed hero, so the downsample
+      // is visually free but removes ~4x the decode work on every Home entry.
+      width = 200.dp,
+      height = 105.dp,
+      contentScale = ContentScale.Crop
+    )
+
+    Box(
+      modifier = Modifier
+        .fillMaxSize()
+        .background(bannerScrim())
+    )
+
+    Column(
+      modifier = Modifier
+        .fillMaxSize()
+        .padding(18.dp),
+      verticalArrangement = Arrangement.Bottom,
+      horizontalAlignment = Alignment.Start
+    ) {
+      Text(
+        text = item.name,
+        fontSize = 26.sp,
+        fontWeight = FontWeight.ExtraBold,
+        color = Color.White
+      )
+      Text(
+        text = "الآن على هاتفك",
+        fontSize = 14.sp,
+        fontWeight = FontWeight.Medium,
+        color = Color(0xFFE2E8F0)
+      )
+      Spacer(modifier = Modifier.height(8.dp))
+      Button(
+        onClick = onInstallClick,
+        colors = ButtonDefaults.buttonColors(containerColor = ButtonInstallBlue),
+        shape = RoundedCornerShape(16.dp),
+        contentPadding = PaddingValues(horizontal = 22.dp, vertical = 6.dp),
+        modifier = Modifier.height(44.dp)
+      ) {
+        Text(
+          text = "تثبيت",
+          fontSize = 13.sp,
+          fontWeight = FontWeight.Bold,
+          color = Color.White
+        )
+      }
+    }
+  }
+}
+
+/** Extracted so the press-scale animation is scoped to this card only. */
+@Composable
+private fun FeaturedGameCard(
+  game: StoreItem,
+  onClick: () -> Unit
+) {
+  Box(
+    modifier = Modifier
+      .width(180.dp)
+      .height(115.dp)
+      .clip(RoundedCornerShape(18.dp))
+      .border(1.dp, CardBorder, RoundedCornerShape(18.dp))
+      .pressable(onClick = onClick)
+  ) {
+    StoreImage(
+      data = game.bannerUrl.ifEmpty { R.drawable.screenshot_gta1 },
+      contentDescription = game.name,
+      width = 180.dp,
+      height = 115.dp,
+      contentScale = ContentScale.Crop
+    )
+
+    Box(
+      modifier = Modifier
+        .fillMaxSize()
+        .background(
+          Brush.verticalGradient(
+            colors = listOf(Color.Transparent, Color(0xDD070A12))
+          )
+        )
+    )
+
+    Column(
+      modifier = Modifier
+        .fillMaxSize()
+        .padding(10.dp),
+      verticalArrangement = Arrangement.Bottom
+    ) {
+      Text(
+        text = game.name,
+        fontSize = 13.sp,
+        fontWeight = FontWeight.Bold,
+        color = Color.White,
+        maxLines = 1
+      )
+      Text(
+        text = game.developer,
+        fontSize = 11.sp,
+        color = TextSecondary,
+        maxLines = 1
+      )
+    }
+  }
+}
+
+@Composable
+private fun QuickActionButton(
+  title: String,
+  icon: ImageVector,
+  bgColor: Color,
+  iconColor: Color,
+  onClick: () -> Unit
+) {
+  Column(
+    horizontalAlignment = Alignment.CenterHorizontally,
+    modifier = Modifier
+      .clip(RoundedCornerShape(20.dp))
+      .pressable(onClick = onClick)
+      .padding(vertical = 4.dp)
+  ) {
+    Box(
+      modifier = Modifier
+        .size(62.dp)
+        .clip(RoundedCornerShape(20.dp))
+        .background(bgColor)
+        .border(1.dp, iconColor.copy(alpha = 0.25f), RoundedCornerShape(20.dp)),
+      contentAlignment = Alignment.Center
+    ) {
+      Icon(
+        imageVector = icon,
+        contentDescription = title,
+        tint = iconColor,
+        modifier = Modifier.size(26.dp)
+      )
+    }
+    Spacer(modifier = Modifier.height(6.dp))
+    Text(
+      text = title,
+      fontSize = 12.sp,
+      fontWeight = FontWeight.Medium,
+      color = TextPrimary
+    )
+  }
+}
+
+@Composable
+fun SectionHeader(
+  title: String,
+  onMoreClick: () -> Unit,
+  modifier: Modifier = Modifier
+) {
+  Row(
+    modifier = modifier
+      .fillMaxWidth()
+      .padding(horizontal = 16.dp),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically
+  ) {
+    Text(
+      text = title,
+      fontSize = 19.sp,
+      fontWeight = FontWeight.Bold,
+      color = TextPrimary
+    )
+
+    // Was `padding(horizontal = 4.dp, vertical = 2.dp)` on a Text — roughly a
+    // 22dp-tall hit area. Now 48dp via minTouchTarget, invisible to layout.
+    Text(
+      text = "المزيد",
+      fontSize = 13.sp,
+      fontWeight = FontWeight.Medium,
+      color = PrimaryBlue,
+      modifier = Modifier
+        .clip(RoundedCornerShape(8.dp))
+        .pressable(onClick = onMoreClick)
+        .minTouchTarget()
+    )
+  }
+}
+
+/**
+ * Scroll-to-top hook for bottom-nav re-tap.
+ *
+ * The parent owns a token that increments whenever the already-active tab is
+ * tapped; this watches it and animates the list home. Using a token instead of
+ * a boolean means repeated taps keep re-triggering (a bool would fire once).
+ */
+@Composable
+fun LazyListState.ScrollToTopOnToken(token: Int) {
+  val handled = remember { mutableIntStateOf(-1) }
+  LaunchedEffect(token) {
+    if (token > 0 && token != handled.intValue) {
+      handled.intValue = token
+      animateScrollToItem(0)
+    }
+  }
 }

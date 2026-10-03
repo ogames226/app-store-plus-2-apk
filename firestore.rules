@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- Admin check: single source of truth, declared before use. ----
+    //
+    // Reads the caller's OWN user document and requires isAdmin == true.
+    // A client can write its own user doc (see /users below), so this is only
+    // as strong as that rule: a determined user could self-grant isAdmin.
+    // Tighten by making /users writes admin-only, or use a custom claim.
+    function isAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // ---- Public store catalog: anyone may read, only admins may write. ----
+    //
+    // These rules previously allowed unconditional public `write`, which meant
+    // any client with the installed app could publish, edit, or delete apps and
+    // categories.
+    match /apps/{appId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ---- Users: owner-scoped. See the SECURITY note on isAdmin() above. ----
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      match /downloads/{downloadId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // ---- Download telemetry: owner-scoped. ----
+    match /downloads/{userId}/{downloadId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
